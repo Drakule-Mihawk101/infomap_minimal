@@ -25,7 +25,7 @@ public:
 		return networkfile;
 	}
 	void setNetworkFile(string filename) {
-		networkfile = filename;
+		networkfile = "/home/faysal/Downloads/infomap_serial_minimal/src/ninetriangles.net";
 	}
 
 	void setInputFormat();

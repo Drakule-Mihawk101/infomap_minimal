@@ -10,6 +10,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <string>
 
 using namespace std;
 
@@ -46,6 +51,7 @@ string Network::parseVertices(string& file, bool required) {
 	string line;
 
 	ifstream input(file.c_str());
+
 	// First skip lines until header
 	while (!getline(input, line).fail()) {
 		if (line.length() == 0 || line[0] == '#')
@@ -58,9 +64,8 @@ string Network::parseVertices(string& file, bool required) {
 		throw runtime_error("No matching header for vertices found.");
 	}
 	//throw FileFormatError("No matching header for vertices found.");
-
-	return line;
-	//return parseVertices(file, line, required);
+	//return line;
+	return parseVertices(file, line, required);
 }
 
 string Network::parseVertices(string& file, string header, bool required) {
