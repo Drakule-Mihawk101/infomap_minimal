@@ -30,36 +30,47 @@ void Network::readInputData(string filename) {
 			parsePajekNetwork(filename);
 }
 
-void Network::parsePajekNetwork(string& filename) {
+void Network::parsePajekNetwork(string filename) {
 
 	ifstream input(filename.c_str());
 	// Parse the vertices and return the line after
-	string line = parseVertices(filename, false);
+	string line = parseVertices(input, false);
 
 	// Read links in format "from to weight", for example "1 3 2" (all integers) and each undirected link only ones (weight is optional).
 	while (!getline(input, line).fail()) {
 		if (line.length() == 0)
 			continue;
-		//parseLink(line, n1, n2, weight);
+		unsigned int n1, n2;
+		double weight;
+		parseLink(line, n1, n2, weight);
 
 		//addLink(n1, n2, weight);
 	}
 
 }
 
-string Network::parseVertices(string& file, bool required) {
+void Network::parseLink(const std::string& line, unsigned int& n1, unsigned int& n2, double& weight)
+{
+	m_extractor.clear();
+	cout<<"line :"<<line<<endl;
+	m_extractor.str(line);
+	if (!(m_extractor >> n1 >> n2))
+		throw runtime_error("Can't parse link data from line");
+	(m_extractor >> weight) || (weight = 1.0);
+	n1 -= m_indexOffset;
+	n2 -= m_indexOffset;
+}
+
+
+string Network::parseVertices(ifstream& file, bool required) {
 	string line;
-
-	ifstream input(file.c_str());
-
 	// First skip lines until header
-	while (!getline(input, line).fail()) {
+	while (!getline(file, line).fail()) {
 		if (line.length() == 0 || line[0] == '#')
 			continue;
 		if (line[0] == '*')
 			break;
 	}
-
 	if (line.length() == 0 || line[0] != '*') {
 		throw runtime_error("No matching header for vertices found.");
 	}
@@ -68,8 +79,8 @@ string Network::parseVertices(string& file, bool required) {
 	return parseVertices(file, line, required);
 }
 
-string Network::parseVertices(string& file, string header, bool required) {
-	ifstream input(file.c_str());
+string Network::parseVertices(ifstream& file, string header, bool required) {
+
 	istringstream ss;
 	string buf;
 	ss.str(header);
@@ -100,7 +111,7 @@ string Network::parseVertices(string& file, string header, bool required) {
 	bool didEarlyBreak = false;
 
 	// Read node names and optional weight, assuming id 1, 2, 3, ... (or 0, 1, 2, ... if zero-based node numbering)
-	while (!std::getline(input, line).fail()) {
+	while (!std::getline(file, line).fail()) {
 		if (line.length() == 0 || line[0] == '#')
 			continue;
 
@@ -146,7 +157,6 @@ string Network::parseVertices(string& file, string header, bool required) {
 //									".\nBe sure to use zero-based node numbering if the node numbers start from zero." :
 //									"."));
 			throw runtime_error("The node id from line doesn't follow a consequitive order");
-
 		}
 
 		m_sumNodeWeights += weight;
@@ -154,6 +164,8 @@ string Network::parseVertices(string& file, string header, bool required) {
 		m_nodeNames[nodeIndex] = name;
 		++numNodesParsed;
 	}
+
+	cout<<"number of nodes parsed"<<numNodesParsed<<endl;
 
 	if (line[0] == '*' && numNodesParsed == 0) {
 		// Short pajek version (no nodes defined), set node number as name
@@ -165,7 +177,7 @@ string Network::parseVertices(string& file, string header, bool required) {
 	}
 
 	if (didEarlyBreak) {
-		//line = skipUntilHeader(file);
+		line = skipUntilHeader(input);
 	}
 
 	return line;

@@ -24,22 +24,24 @@ private:
 	vector<std::string> m_nodeNames;
 	vector<double> m_nodeWeights;
 	double m_sumNodeWeights;
-	unsigned int m_indexOffset;
+	unsigned int m_indexOffset=1;
 
 public:
 	unsigned int m_numNodesFound;
-
+	// Helpers
+	istringstream m_extractor;
 
 	void setConfiuration(Configuration& config);
 
 	void readInputData(string filename);
 
-	void parsePajekNetwork(string& filename);
+	void parsePajekNetwork(string filename);
 
 	string skipUntilHeader(ifstream& file);
 
-	string parseVertices(string& file, bool required);
-	string parseVertices(string& file, string header, bool required);
+	string parseVertices(ifstream& file, bool required);
+	string parseVertices(ifstream& file, string header, bool required);
+	void parseLink(const std::string& line, unsigned int& n1, unsigned int& n2, double& weight);
 
 	template<typename T>
 	inline string stringify(T x)
