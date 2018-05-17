@@ -20,6 +20,9 @@ private:
 
 public:
 	unsigned int nodeLimit;
+	double weightThreshold;
+	bool includeSelfLinks = false;
+	bool parseAsUndirected = false;
 
 	string getNetworkFile() {
 		return networkfile;

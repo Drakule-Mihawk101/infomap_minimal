@@ -14,7 +14,6 @@
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <string>
 
 using namespace std;
 
@@ -47,6 +46,72 @@ void Network::parsePajekNetwork(string filename) {
 		//addLink(n1, n2, weight);
 	}
 
+}
+
+bool Network::addLink(unsigned int n1, unsigned int n2, double weight)
+{
+	++m_numLinksFound;
+
+	if (m_config.nodeLimit > 0 && (n1 >= m_config.nodeLimit || n2 >= m_config.nodeLimit))
+		return false;
+
+	if (weight < m_config.weightThreshold) {
+		++m_numLinksIgnoredByWeightThreshold;
+		m_totalLinkWeightIgnored += weight;
+		return false;
+	}
+
+	if (n2 == n1)
+	{
+		++m_numSelfLinksFound;
+		if (!m_config.includeSelfLinks)
+			return false;
+		++m_numSelfLinks;
+		m_totalSelfLinkWeight += weight;
+	}
+	else if (m_config.parseAsUndirected && n2 < n1) // minimize number of links
+		std::swap(n1, n2);
+
+	m_maxNodeIndex = std::max(m_maxNodeIndex, std::max(n1, n2));
+	m_minNodeIndex = std::min(m_minNodeIndex, std::min(n1, n2));
+
+	insertLink(n1, n2, weight);
+
+	return true;
+}
+
+
+bool Network::insertLink(unsigned int n1, unsigned int n2, double weight)
+{
+	++m_numLinks;
+	m_totalLinkWeight += weight;
+	insertNode(n1);
+	insertNode(n2);
+
+	// Aggregate link weights if they are definied more than once
+	LinkMap::iterator firstIt = m_links.lower_bound(n1);			//faysal: maybe i will change the m_links to some other data structure like vector
+	if (firstIt != m_links.end() && firstIt->first == n1) // First linkEnd already exists, check second linkEnd
+	{
+		std::pair<std::map<unsigned int, double>::iterator, bool> ret2 = firstIt->second.insert(std::make_pair(n2, weight));
+		if (!ret2.second)
+		{
+			ret2.first->second += weight;
+			++m_numAggregatedLinks;
+			--m_numLinks;
+			return false;
+		}
+	}
+	else
+	{
+		m_links.insert(firstIt, std::make_pair(n1, std::map<unsigned int, double>()))->second.insert(std::make_pair(n2, weight));
+	}
+
+	return true;
+}
+
+bool Network::insertNode(unsigned int nodeIndex)
+{
+	return m_nodes.insert(nodeIndex).second;
 }
 
 void Network::parseLink(const std::string& line, unsigned int& n1, unsigned int& n2, double& weight)
