@@ -29,6 +29,48 @@ void Network::readInputData(string filename) {
 			parsePajekNetwork(filename);
 }
 
+void Network::finalizeAndCheckNetwork(bool printSummary, unsigned int desiredNumberOfNodes) {
+	unsigned int zeroMinusOne = 0;
+		--zeroMinusOne;
+		if (m_maxNodeIndex == zeroMinusOne)
+			throw runtime_error("Integer overflow, be sure to use zero-based node numbering if the node numbers start from zero.");
+		if (m_maxNodeIndex >= m_numNodes)
+			throw runtime_error("At least one link is defined with node numbers that exceeds the number of nodes.");
+		if (m_minNodeIndex == 1 && m_config.zeroBasedNodeNumbers)
+			cout << "(Warning: minimum link index is one, check that you don't use zero based numbering if it's not true.) ";
+
+
+		initNodeDegrees();
+}
+
+void Network::initNodeDegrees()
+{
+	m_outDegree.assign(m_numNodes, 0.0);
+	m_sumLinkOutWeight.assign(m_numNodes, 0.0);
+	m_numDanglingNodes = m_numNodes;
+	for (LinkMap::iterator linkIt(m_links.begin()); linkIt != m_links.end(); ++linkIt)
+	{
+		unsigned int n1 = linkIt->first;
+		std::map<unsigned int, double>& subLinks = linkIt->second;
+		for (std::map<unsigned int, double>::iterator subIt(subLinks.begin()); subIt != subLinks.end(); ++subIt)
+		{
+			unsigned int n2 = subIt->first;
+			double linkWeight = subIt->second;
+			if (m_outDegree[n1] == 0)
+				--m_numDanglingNodes;
+			++m_outDegree[n1];
+			m_sumLinkOutWeight[n1] += linkWeight;
+			if (n1 != n2 && m_config.parseAsUndirected)
+			{
+				if (m_outDegree[n2] == 0)
+					--m_numDanglingNodes;
+				++m_outDegree[n2];
+				m_sumLinkOutWeight[n2] += linkWeight;
+			}
+		}
+	}
+}
+
 void Network::parsePajekNetwork(string filename) {
 
 	ifstream input(filename.c_str());
@@ -43,16 +85,15 @@ void Network::parsePajekNetwork(string filename) {
 		double weight;
 		parseLink(line, n1, n2, weight);
 
-		//addLink(n1, n2, weight);
+		addLink(n1, n2, weight);
 	}
-
 }
 
-bool Network::addLink(unsigned int n1, unsigned int n2, double weight)
-{
+bool Network::addLink(unsigned int n1, unsigned int n2, double weight) {
 	++m_numLinksFound;
 
-	if (m_config.nodeLimit > 0 && (n1 >= m_config.nodeLimit || n2 >= m_config.nodeLimit))
+	if (m_config.nodeLimit > 0
+			&& (n1 >= m_config.nodeLimit || n2 >= m_config.nodeLimit))
 		return false;
 
 	if (weight < m_config.weightThreshold) {
@@ -61,15 +102,13 @@ bool Network::addLink(unsigned int n1, unsigned int n2, double weight)
 		return false;
 	}
 
-	if (n2 == n1)
-	{
+	if (n2 == n1) {
 		++m_numSelfLinksFound;
 		if (!m_config.includeSelfLinks)
 			return false;
 		++m_numSelfLinks;
 		m_totalSelfLinkWeight += weight;
-	}
-	else if (m_config.parseAsUndirected && n2 < n1) // minimize number of links
+	} else if (m_config.parseAsUndirected && n2 < n1) // minimize number of links
 		std::swap(n1, n2);
 
 	m_maxNodeIndex = std::max(m_maxNodeIndex, std::max(n1, n2));
@@ -80,44 +119,41 @@ bool Network::addLink(unsigned int n1, unsigned int n2, double weight)
 	return true;
 }
 
-
-bool Network::insertLink(unsigned int n1, unsigned int n2, double weight)
-{
+bool Network::insertLink(unsigned int n1, unsigned int n2, double weight) {
 	++m_numLinks;
 	m_totalLinkWeight += weight;
 	insertNode(n1);
 	insertNode(n2);
 
 	// Aggregate link weights if they are definied more than once
-	LinkMap::iterator firstIt = m_links.lower_bound(n1);			//faysal: maybe i will change the m_links to some other data structure like vector
+	LinkMap::iterator firstIt = m_links.lower_bound(n1);//faysal: maybe i will change the m_links to some other data structure like vector
 	if (firstIt != m_links.end() && firstIt->first == n1) // First linkEnd already exists, check second linkEnd
-	{
-		std::pair<std::map<unsigned int, double>::iterator, bool> ret2 = firstIt->second.insert(std::make_pair(n2, weight));
-		if (!ret2.second)
-		{
+			{
+		std::pair<std::map<unsigned int, double>::iterator, bool> ret2 =
+				firstIt->second.insert(std::make_pair(n2, weight));
+		if (!ret2.second) {
 			ret2.first->second += weight;
 			++m_numAggregatedLinks;
 			--m_numLinks;
 			return false;
 		}
-	}
-	else
-	{
-		m_links.insert(firstIt, std::make_pair(n1, std::map<unsigned int, double>()))->second.insert(std::make_pair(n2, weight));
+	} else {
+		m_links.insert(firstIt,
+				std::make_pair(n1, std::map<unsigned int, double>()))->second.insert(
+				std::make_pair(n2, weight));
 	}
 
 	return true;
 }
 
-bool Network::insertNode(unsigned int nodeIndex)
-{
+bool Network::insertNode(unsigned int nodeIndex) {
 	return m_nodes.insert(nodeIndex).second;
 }
 
-void Network::parseLink(const std::string& line, unsigned int& n1, unsigned int& n2, double& weight)
-{
+void Network::parseLink(const std::string& line, unsigned int& n1,
+		unsigned int& n2, double& weight) {
 	m_extractor.clear();
-	cout<<"line :"<<line<<endl;
+	cout << "line :" << line << endl;
 	m_extractor.str(line);
 	if (!(m_extractor >> n1 >> n2))
 		throw runtime_error("Can't parse link data from line");
@@ -125,7 +161,6 @@ void Network::parseLink(const std::string& line, unsigned int& n1, unsigned int&
 	n1 -= m_indexOffset;
 	n2 -= m_indexOffset;
 }
-
 
 string Network::parseVertices(ifstream& file, bool required) {
 	string line;
@@ -221,7 +256,8 @@ string Network::parseVertices(ifstream& file, string header, bool required) {
 //							<< ((m_indexOffset == 1 && id == 0) ?
 //									".\nBe sure to use zero-based node numbering if the node numbers start from zero." :
 //									"."));
-			throw runtime_error("The node id from line doesn't follow a consequitive order");
+			throw runtime_error(
+					"The node id from line doesn't follow a consequitive order");
 		}
 
 		m_sumNodeWeights += weight;
@@ -230,7 +266,7 @@ string Network::parseVertices(ifstream& file, string header, bool required) {
 		++numNodesParsed;
 	}
 
-	cout<<"number of nodes parsed"<<numNodesParsed<<endl;
+	cout << "number of nodes parsed" << numNodesParsed << endl;
 
 	if (line[0] == '*' && numNodesParsed == 0) {
 		// Short pajek version (no nodes defined), set node number as name
@@ -248,13 +284,11 @@ string Network::parseVertices(ifstream& file, string header, bool required) {
 	return line;
 }
 
-string Network::skipUntilHeader(ifstream& file)
-{
+string Network::skipUntilHeader(ifstream& file) {
 	std::string line;
 
 	// First skip lines until header
-	while(!std::getline(file, line).fail())
-	{
+	while (!std::getline(file, line).fail()) {
 		if (line.length() == 0 || line[0] == '#')
 			continue;
 		if (line[0] == '*')

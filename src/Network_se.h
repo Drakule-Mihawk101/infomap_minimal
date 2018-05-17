@@ -13,6 +13,8 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
+#include <map>
+#include <set>
 
 using namespace std;
 
@@ -46,7 +48,10 @@ public:
 	unsigned int m_numSelfLinks;
 	unsigned int m_numLinksFound;
 	unsigned int m_numLinks; //this is for total number of edges in the graph
-	unsigned int m_totalLinkWeight; //summation of the weights of every link
+	unsigned int m_totalLinkWeight = 0; //summation of the weights of every link
+	vector<double> m_outDegree;
+	vector<double> m_sumLinkOutWeight;
+	unsigned int m_numDanglingNodes;
 	set<unsigned int> m_nodes;
 
 	void setConfiuration(Configuration& config);
@@ -57,13 +62,15 @@ public:
 
 	string skipUntilHeader(ifstream& file);
 
+	void finalizeAndCheckNetwork(bool printSummary, unsigned int desiredNumberOfNodes);
+
 	string parseVertices(ifstream& file, bool required);
 	string parseVertices(ifstream& file, string header, bool required);
 	void parseLink(const std::string& line, unsigned int& n1, unsigned int& n2, double& weight);
 	bool addLink(unsigned int n1, unsigned int n2, double weight);
 	bool insertLink(unsigned int n1, unsigned int n2, double weight);
 	bool insertNode(unsigned int nodeIndex);
-
+	void Network::initNodeDegrees();
 
 
 	template<typename T>

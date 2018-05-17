@@ -23,6 +23,7 @@ public:
 	double weightThreshold;
 	bool includeSelfLinks = false;
 	bool parseAsUndirected = false;
+	bool zeroBasedNodeNumbers = false;
 
 	string getNetworkFile() {
 		return networkfile;
