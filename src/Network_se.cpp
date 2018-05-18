@@ -17,6 +17,29 @@
 
 using namespace std;
 
+
+Network::Network()
+{
+	m_numNodes=0;
+	m_sumNodeWeights=0.0;
+	m_indexOffset=1;
+	m_numNodesFound=0;
+	m_numAggregatedLinks=0;
+	m_totalSelfLinkWeight=0.0; // On whole network
+	m_numLinksIgnoredByWeightThreshold=0;
+	m_totalLinkWeightIgnored=0.0;
+	m_addSelfLinks=0;
+	m_numAdditionalLinks=0;
+	m_sumAdditionalLinkWeight=0;
+	m_maxNodeIndex=0; // On links
+	m_minNodeIndex=0; // On links
+	m_numSelfLinksFound=0;
+	m_numSelfLinks=0;
+	m_numLinksFound=0;
+	m_numLinks=0; //this is for total number of edges in the graph
+	m_totalLinkWeight = 0; //summation of the weights of every link
+	m_numDanglingNodes=0;
+}
 void Network::setConfiuration(Configuration& config) {
 	m_config = config;
 	m_config.setInputFormat();
@@ -29,7 +52,7 @@ void Network::readInputData(string filename) {
 			parsePajekNetwork(filename);
 }
 
-void Network::finalizeAndCheckNetwork(bool printSummary, unsigned int desiredNumberOfNodes) {
+void Network::finalizeAndCheckNetwork() {
 	unsigned int zeroMinusOne = 0;
 		--zeroMinusOne;
 		if (m_maxNodeIndex == zeroMinusOne)
@@ -38,7 +61,6 @@ void Network::finalizeAndCheckNetwork(bool printSummary, unsigned int desiredNum
 			throw runtime_error("At least one link is defined with node numbers that exceeds the number of nodes.");
 		if (m_minNodeIndex == 1 && m_config.zeroBasedNodeNumbers)
 			cout << "(Warning: minimum link index is one, check that you don't use zero based numbering if it's not true.) ";
-
 
 		initNodeDegrees();
 }
@@ -87,6 +109,8 @@ void Network::parsePajekNetwork(string filename) {
 
 		addLink(n1, n2, weight);
 	}
+
+	finalizeAndCheckNetwork();
 }
 
 bool Network::addLink(unsigned int n1, unsigned int n2, double weight) {

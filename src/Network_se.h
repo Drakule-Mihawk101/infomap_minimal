@@ -26,7 +26,7 @@ private:
 	vector<std::string> m_nodeNames;
 	vector<double> m_nodeWeights;
 	double m_sumNodeWeights;
-	unsigned int m_indexOffset=1;
+	unsigned int m_indexOffset;
 
 public:
 	typedef std::map<unsigned int, std::map<unsigned int, double> >	LinkMap;
@@ -48,12 +48,13 @@ public:
 	unsigned int m_numSelfLinks;
 	unsigned int m_numLinksFound;
 	unsigned int m_numLinks; //this is for total number of edges in the graph
-	unsigned int m_totalLinkWeight = 0; //summation of the weights of every link
+	unsigned int m_totalLinkWeight; //summation of the weights of every link
 	vector<double> m_outDegree;
 	vector<double> m_sumLinkOutWeight;
 	unsigned int m_numDanglingNodes;
 	set<unsigned int> m_nodes;
 
+	Network();
 	void setConfiuration(Configuration& config);
 
 	void readInputData(string filename);
@@ -62,7 +63,7 @@ public:
 
 	string skipUntilHeader(ifstream& file);
 
-	void finalizeAndCheckNetwork(bool printSummary, unsigned int desiredNumberOfNodes);
+	void finalizeAndCheckNetwork();
 
 	string parseVertices(ifstream& file, bool required);
 	string parseVertices(ifstream& file, string header, bool required);
@@ -70,7 +71,7 @@ public:
 	bool addLink(unsigned int n1, unsigned int n2, double weight);
 	bool insertLink(unsigned int n1, unsigned int n2, double weight);
 	bool insertNode(unsigned int nodeIndex);
-	void Network::initNodeDegrees();
+	void initNodeDegrees();
 
 
 	template<typename T>
