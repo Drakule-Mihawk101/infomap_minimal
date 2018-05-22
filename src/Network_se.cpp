@@ -93,6 +93,20 @@ void Network::initNodeDegrees()
 	}
 }
 
+void Network::initNodeNames()
+{
+	unsigned int indexOffset = m_config.zeroBasedNodeNumbers? 0 : 1;
+		if (m_nodeNames.size() < numNodes())
+		{
+			// Define nodes
+			unsigned int oldSize = m_nodeNames.size();
+			m_nodeNames.resize(numNodes());
+			for (unsigned int i = oldSize; i < numNodes(); ++i)
+				m_nodeNames[i] =  stringify(i + indexOffset);
+
+		}
+}
+
 void Network::parsePajekNetwork(string filename) {
 
 	ifstream input(filename.c_str());

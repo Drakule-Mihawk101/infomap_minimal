@@ -7,12 +7,22 @@
 #include <iostream>
 #include "Configuration.h"
 #include "Network_se.h"
+#include "FlowNetwork_se.h"
 
 using namespace std;
 
 Configuration conf;
 
-int run()
+
+bool initNetwork(Network& network)
+{
+ 	network.initNodeNames();
+ 	FlowNetwork flowNetwork;
+	flowNetwork.calculateFlow(network, conf);
+ 	return true;
+}
+
+bool run()
 {
 	try
 	{
@@ -20,6 +30,7 @@ int run()
 		Network network;
 		network.setConfiuration(conf);
 		network.readInputData(conf.getNetworkFile());
+		return initNetwork(network);
 
 	}
 	catch (std::exception& e)
@@ -27,9 +38,8 @@ int run()
 		std::cerr << e.what() << std::endl;
 	}
 
-	return 0;
+	return false;
 }
-
 
 int main(int argc, char* argv[])
 {

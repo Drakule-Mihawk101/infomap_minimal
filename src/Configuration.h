@@ -24,6 +24,9 @@ public:
 	bool includeSelfLinks = false;
 	bool parseAsUndirected = false;
 	bool zeroBasedNodeNumbers = false;
+	bool rawdir = false;
+	bool directed = false;
+
 
 	string getNetworkFile() {
 		return networkfile;

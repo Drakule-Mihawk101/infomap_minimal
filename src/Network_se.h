@@ -64,7 +64,8 @@ public:
 	string skipUntilHeader(ifstream& file);
 
 	void finalizeAndCheckNetwork();
-
+	void initNodeNames();
+	unsigned int numNodes() const { return m_numNodes; }
 	string parseVertices(ifstream& file, bool required);
 	string parseVertices(ifstream& file, string header, bool required);
 	void parseLink(const std::string& line, unsigned int& n1, unsigned int& n2, double& weight);
@@ -72,7 +73,12 @@ public:
 	bool insertLink(unsigned int n1, unsigned int n2, double weight);
 	bool insertNode(unsigned int nodeIndex);
 	void initNodeDegrees();
-
+	const vector<double>& outDegree() const { return m_outDegree; }
+	const std::vector<double>& sumLinkOutWeight() const { return m_sumLinkOutWeight; }
+	const LinkMap& linkMap() const { return m_links; }
+	unsigned int numLinks() const { return m_numLinks; }
+	double totalLinkWeight() const { return m_totalLinkWeight; }
+	double totalSelfLinkWeight() const { return m_totalSelfLinkWeight; }
 
 	template<typename T>
 	inline string stringify(T x)
